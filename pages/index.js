@@ -7,7 +7,7 @@ export default function Home({ events }) {
 	return (
 		<Layout>
 			<h1>Upcoming Events</h1>
-			{events.length === 0 && <h3>No events to show</h3>}
+			{events?.length === 0 && <h3>No events to show</h3>}
 			{events.map((evt) => (
 				<EventItem key={evt.id} evt={evt} />
 			))}
@@ -22,12 +22,14 @@ export default function Home({ events }) {
 }
 
 export async function getStaticProps() {
-	const res = await fetch(`${API_URL}/api/events`);
-	const data = await res.json();
-
+	const res = await fetch(
+		`${API_URL}/api/events?sort=date:desc&pagination[limit]=3&populate=*`
+	);
+	const eventsData = await res.json();
+	const events = eventsData.data;
 	return {
 		props: {
-			events: data.slice(0, 3),
+			events,
 			revalidate: 1,
 		},
 	};
