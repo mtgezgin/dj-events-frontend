@@ -1,9 +1,12 @@
 import { FaPencilAlt, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { API_URL } from '@/config/index';
 import styles from '@/styles/Event.module.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function EventPage({ event }) {
 	const { attributes, id } = event;
@@ -12,9 +15,24 @@ export default function EventPage({ event }) {
 	const { data } = image || {};
 	const { attributes: imageAttributes } = data || {};
 	const { url } = imageAttributes || {};
-	const deleteEvent = (e) => {
-		console.log('delete');
+	const router = useRouter();
+
+	const deleteEvent = async (e) => {
+		if (confirm('Are you sure?')) {
+			const res = await fetch(`${API_URL}/api/events/${id}`, {
+				method: 'DELETE',
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				toast.error(data.message);
+			} else {
+				router.push('/events');
+			}
+		} else {
+			return;
+		}
 	};
+
 	return (
 		<Layout>
 			<div className={styles.event}>
@@ -30,9 +48,10 @@ export default function EventPage({ event }) {
 				</div>
 
 				<span>
-					{new Date(date).toLocaleDateString('en-US')} at {time}
+					{new Date(date).toLocaleDateString('tr')} at {time}
 				</span>
 				<h1>{name}</h1>
+				<ToastContainer />
 				{url && (
 					<div className={styles.image}>
 						<Image src={url} width={960} height={600} />
@@ -98,6 +117,5 @@ export async function getStaticProps({ params }) {
 
 	const eventData = await res.json();
 	const event = eventData.data[0];
-	console.log(event);
 	return { props: { event }, revalidate: 1 };
 }
