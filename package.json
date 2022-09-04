@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "cookie": "^0.5.0",
     "date-fns": "^2.29.2",
     "next": "12.2.3",
     "qs": "^6.11.0",
