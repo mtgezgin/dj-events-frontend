@@ -11,8 +11,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { format, parseISO } from 'date-fns';
 import { FaImage } from 'react-icons/fa';
+import { parseCookies } from '@/helpers/index';
 
-export default function EditEventPage({ evt }) {
+export default function EditEventPage({ evt, token }) {
 	const { id, attributes } = evt || {};
 	const {
 		name,
@@ -58,15 +59,20 @@ export default function EditEventPage({ evt }) {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
 			},
 			body: JSON.stringify({ data: values }),
 		});
 
 		if (!res.ok) {
+			if (res.status === 403 || res.status === 401) {
+				toast.error('No token included');
+				return;
+			}
 			toast.error('Something went wrong');
 		} else {
 			const evt = await res.json();
-			router.push(`/events/${slug}`);
+			router.push(`/events/${evt.data.attributes.slug}`);
 		}
 	};
 
@@ -177,22 +183,22 @@ export default function EditEventPage({ evt }) {
 				<FaImage /> Set Image
 			</button>
 			<Modal show={isShowModal} onClose={() => setIsShowModal(false)}>
-				<ImageUpload evtId={id} imageUploaded={imageUploaded} />
+				<ImageUpload evtId={id} imageUploaded={imageUploaded} token={token} />
 			</Modal>
 		</Layout>
 	);
 }
 
 export async function getServerSideProps({ query: { id }, req }) {
+	const { token } = parseCookies(req); // get token from cookie
 	const res = await fetch(`${API_URL}/api/events/${id}?populate=*`);
 	const data = await res.json();
 	const event = data.data;
 
-	console.log(req.headers.cookie);
-
 	return {
 		props: {
 			evt: event,
+			token,
 		},
 	};
 }
